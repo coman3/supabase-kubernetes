@@ -1,0 +1,40 @@
+{
+    "charts": {
+        "supabase": {
+            "app_readme": "<h1>Supabase</h1>",
+            "categories": [
+                "hosting"
+            ],
+            "description": "Supabase is a serverless hosting framework similar to Firebase.",
+            "healthy": true,
+            "healthy_error": null,
+            "home": "https://immich.app",
+            "location": "/__w/supabase-kubernetes/charts/supabase",
+            "latest_version": "0.1.2",
+            "latest_app_version": "0.0.1",
+            "latest_human_version": "0.0.1",
+            "last_update": "2024-06-21 16:31:22",
+            "name": "supabase",
+            "recommended": false,
+            "title": "Supabase",
+            "maintainers": [
+                {
+                    "name": "coman3",
+                    "url": "https://github.com/coman3",
+                    "email": "me@lachlanvelden.com"
+                }
+            ],
+            "tags": [
+                "hosting",
+                "database",
+                "serverless"
+            ],
+            "screenshots": [],
+            "sources": [
+                "https://supabase.com",
+                "https://github.com/coman3/supabase-kubernetes"
+            ],
+            "icon_url": "https://avatars.githubusercontent.com/u/54469796"
+        }
+    }
+}
