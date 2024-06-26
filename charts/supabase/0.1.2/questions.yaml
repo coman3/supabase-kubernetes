@@ -1,863 +1,1166 @@
-groups:
-  - name: Supabase Configuration
-    description: Configure Supabase
-  - name: Network Configuration
-    description: Configure Network for Supabase
-  - name: Storage Configuration
-    description: Configure Storage for Supabase
-  - name: Resources Configuration
-    description: Configure Resources for Supabase
-
-portals:
-  web_portal:
-    protocols:
-      - "$kubernetes-resource_configmap_portal_protocol"
-    host:
-      - "$kubernetes-resource_configmap_portal_host"
-    ports:
-      - "$kubernetes-resource_configmap_portal_port"
-    path: "$kubernetes-resource_configmap_portal_path"
-
 questions:
-  - variable: TZ
-    group: Supabase Configuration
-    label: Timezone
-    schema:
-      type: string
-      default: Etc/UTC
-      required: true
-      $ref:
-        - definitions/timezone
-
-  - variable: supabaseConfig
-    label: ""
-    group: Supabase Configuration
+  - variable: secret
+    label: "Secret Configuration"
+    description: "Configure secrets"
     schema:
       type: dict
       attrs:
-        - variable: enableML
-          label: Enable Machine Learning
-          description: |
-            Enable Machine Learning
+        - variable: jwt
+          label: "JWT Secret"
+          description: "Configure JWT Secret"
+          schema:
+            type: dict
+            attrs:
+              - variable: anonKey
+                label: "Anon Key"
+                schema:
+                  type: string
+                  default: ""
+              - variable: serviceKey
+                label: "Service Key"
+                schema:
+                  type: string
+                  default: ""
+              - variable: secret
+                label: "Secret"
+                schema:
+                  type: string
+                  default: ""
+              - variable: secretRef
+                label: "Secret Ref"
+                description: "specify existing secret, which takes precedence over variables above"
+                schema:
+                  type: string
+                  default: ""
+              - variable: secretRefKey
+                label: "Secret Ref Key"
+                description: "override secret keys for existing secret refs"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: anonKey
+                      label: "Anon Key"
+                      schema:
+                        type: string
+                        default: anonKey
+                    - variable: serviceKey
+                      label: "Service Key"
+                      schema:
+                        type: string
+                        default: serviceKey
+                    - variable: secret
+                      label: "Secret"
+                      schema:
+                        type: string
+                        default: secret
+        - variable: db
+          label: "Database Credentials"
+          description: "Configure database credentials\n        these fields must be provided even if using external database"
+          schema:
+            type: dict
+            attrs:
+              - variable: username
+                label: "Username"
+                schema:
+                  type: string
+                  default: ""
+              - variable: password
+                label: "Password"
+                schema:
+                  type: string
+                  default: ""
+              - variable: database
+                label: "Database"
+                schema:
+                  type: string
+                  default: ""
+              - variable: secretRef
+                label: "Secret Ref"
+                description: "specify existing secret, which takes precedence over variables above"
+                schema:
+                  type: string
+                  default: ""
+              - variable: secretRefKey
+                label: "Secret Ref Key"
+                description: "override secret keys for existing secret refs"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: username
+                      label: "Username"
+                      schema:
+                        type: string
+                        default: username
+                    - variable: password
+                      label: "Password"
+                      schema:
+                        type: string
+                        default: password
+                    - variable: database
+                      label: "Database"
+                      schema:
+                        type: string
+                        default: database
+        - variable: analytics
+          label: "Analytics API Key"
+          description: "Configure analytics Logflare API key"
+          schema:
+            type: dict
+            attrs:
+              - variable: apiKey
+                label: "API Key"
+                schema:
+                  type: string
+                  default: ""
+              - variable: secretRef
+                label: "Secret Ref"
+                description: "specify existing secret, which takes precedence over variable above"
+                schema:
+                  type: string
+                  default: ""
+              - variable: secretRefKey
+                label: "Secret Ref Key"
+                description: "override secret keys for existing secret refs"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: apiKey
+                      label: "API Key"
+                      schema:
+                        type: string
+                        default: apiKey
+        - variable: smtp
+          label: "SMTP Credentials"
+          description: "Configure smtp credentials"
+          schema:
+            type: dict
+            attrs:
+              - variable: secretRefKey
+                label: "Secret Ref Key"
+                description: "override secret keys for existing secret refs"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: username
+                      label: "Username"
+                      schema:
+                        type: string
+                        default: username
+                    - variable: password
+                      label: "Password"
+                      schema:
+                        type: string
+                        default: password
+        - variable: dashboard
+          label: "Dashboard Credentials"
+          description: "Configure secret used to access the studio dashboard\n        leave it empty to disable dashboard authentication"
+          schema:
+            type: dict
+            attrs:
+              - variable: secretRefKey
+                label: "Secret Ref Key"
+                description: "override secret keys for existing secret refs"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: username
+                      label: "Username"
+                      schema:
+                        type: string
+                        default: username
+                    - variable: password
+                      label: "Password"
+                      schema:
+                        type: string
+                        default: password
+        - variable: s3
+          label: "S3 Credentials"
+          description: "Configure S3 credentials for storage object bucket"
+          schema:
+            type: dict
+            attrs:
+              - variable: secretRefKey
+                label: "Secret Ref Key"
+                description: "override secret keys for existing secret refs"
+                schema:
+                  type: dict
+                  attrs:
+                    - variable: keyId
+                      label: "Key ID"
+                      schema:
+                        type: string
+                        default: keyId
+                    - variable: accessKey
+                      label: "Access Key"
+                      schema:
+                        type: string
+                        default: accessKey
+  - variable: db
+    label: "Postgres Database"
+    description: "Configure Postgres Database\nA standalone Postgres database configured to work with Supabase services.\nYou can spin up any other Postgres database container if required.\nIf so, make sure to adjust DB_HOST accordingly to point to the right database service."
+    schema:
+      type: dict
+      attrs:
+        - variable: enabled
+          label: "Enable Database Provisioning"
+          description: "Enable database provisioning"
           schema:
             type: boolean
             default: true
-        - variable: mlImageType
-          label: Machine Learning Image Type
-          description: |
-            The type of image to use for Machine Learning.
-          schema:
-            type: string
-            default: mlImage
-            enum:
-              - value: mlImage
-                description: Default Machine Learning Image
-              - value: mlCudaImage
-                description: Cuda Machine Learning Image
-              - value: mlOpenvinoImage
-                description: Openvino Machine Learning Image
-        - variable: logLevel
-          label: Log Level
-          description: |
-            The log level to use for Machine Learning.
-          schema:
-            type: string
-            default: log
-            enum:
-              - value: verbose
-                description: Verbose
-              - value: debug
-                description: Debug
-              - value: log
-                description: Log
-              - value: warn
-                description: Warn
-              - value: error
-                description: Error
-        - variable: huggingFaceEndpoint
-          label: Hugging Face Endpoint (Optional)
-          description: |
-            The Hugging Face endpoint to use for Machine Learning.
-          schema:
-            type: string
-            default: ""
-  - variable: supabaseNetwork
-    label: ""
-    group: Network Configuration
-    schema:
-      type: dict
-      attrs:
-        - variable: webuiPort
-          label: Web Port
-          description: The port for the Supabase WebUI.
-          schema:
-            type: int
-            default: 30041
-            min: 9000
-            max: 65535
-            required: true
-
-  - variable: supabaseStorage
-    label: ""
-    group: Storage Configuration
-    schema:
-      type: dict
-      attrs:
-        - variable: uploads
-          label: Supabase Uploads Storage
-          description: The path to store Supabase uploads.
+        - variable: image
+          label: "Image Configuration"
           schema:
             type: dict
             attrs:
-              - variable: type
-                label: Type
-                description: |
-                  ixVolume: Is dataset created automatically by the system.</br>
-                  Host Path: Is a path that already exists on the system.
+              - variable: repository
+                label: "Image Repository"
                 schema:
                   type: string
-                  required: true
-                  immutable: true
-                  default: ixVolume
-                  enum:
-                    - value: hostPath
-                      description: Host Path (Path that already exists on the system)
-                    - value: ixVolume
-                      description: ixVolume (Dataset created automatically by the system)
-              - variable: ixVolumeConfig
-                label: ixVolume Configuration
-                description: The configuration for the ixVolume dataset.
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "ixVolume"]]
-                  $ref:
-                    - "normalize/ixVolume"
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: datasetName
-                      label: Dataset Name
-                      description: The name of the dataset to use for storage.
-                      schema:
-                        type: string
-                        required: true
-                        immutable: true
-                        hidden: true
-                        default: "uploads"
-                    - variable: aclEntries
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-              - variable: hostPathConfig
-                label: Host Path Configuration
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "hostPath"]]
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: acl
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-                        $ref:
-                          - "normalize/acl"
-                    - variable: hostPath
-                      label: Host Path
-                      description: The host path to use for storage.
-                      schema:
-                        type: hostpath
-                        show_if: [["aclEnable", "=", false]]
-                        required: true
-        - variable: library
-          label: Supabase Library Storage
-          description: The path to store Supabase Library.
-          schema:
-            type: dict
-            attrs:
-              - variable: type
-                label: Type
-                description: |
-                  ixVolume: Is dataset created automatically by the system.</br>
-                  Host Path: Is a path that already exists on the system.
+                  default: supabase/postgres
+              - variable: pullPolicy
+                label: "Image Pull Policy"
                 schema:
                   type: string
-                  required: true
-                  immutable: true
-                  default: ixVolume
-                  enum:
-                    - value: hostPath
-                      description: Host Path (Path that already exists on the system)
-                    - value: ixVolume
-                      description: ixVolume (Dataset created automatically by the system)
-              - variable: ixVolumeConfig
-                label: ixVolume Configuration
-                description: The configuration for the ixVolume dataset.
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "ixVolume"]]
-                  $ref:
-                    - "normalize/ixVolume"
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: datasetName
-                      label: Dataset Name
-                      description: The name of the dataset to use for storage.
-                      schema:
-                        type: string
-                        required: true
-                        immutable: true
-                        hidden: true
-                        default: "library"
-                    - variable: aclEntries
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-              - variable: hostPathConfig
-                label: Host Path Configuration
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "hostPath"]]
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: acl
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-                        $ref:
-                          - "normalize/acl"
-                    - variable: hostPath
-                      label: Host Path
-                      description: The host path to use for storage.
-                      schema:
-                        type: hostpath
-                        show_if: [["aclEnable", "=", false]]
-                        required: true
-        - variable: thumbs
-          label: Supabase Thumbs Storage
-          description: The path to store Supabase Thumbs.
-          schema:
-            type: dict
-            attrs:
-              - variable: type
-                label: Type
-                description: |
-                  ixVolume: Is dataset created automatically by the system.</br>
-                  Host Path: Is a path that already exists on the system.
+                  default: IfNotPresent
+              - variable: tag
+                label: "Image Tag"
                 schema:
                   type: string
-                  required: true
-                  immutable: true
-                  default: ixVolume
-                  enum:
-                    - value: hostPath
-                      description: Host Path (Path that already exists on the system)
-                    - value: ixVolume
-                      description: ixVolume (Dataset created automatically by the system)
-              - variable: ixVolumeConfig
-                label: ixVolume Configuration
-                description: The configuration for the ixVolume dataset.
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "ixVolume"]]
-                  $ref:
-                    - "normalize/ixVolume"
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: datasetName
-                      label: Dataset Name
-                      description: The name of the dataset to use for storage.
-                      schema:
-                        type: string
-                        required: true
-                        immutable: true
-                        hidden: true
-                        default: "thumbs"
-                    - variable: aclEntries
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-              - variable: hostPathConfig
-                label: Host Path Configuration
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "hostPath"]]
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: acl
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-                        $ref:
-                          - "normalize/acl"
-                    - variable: hostPath
-                      label: Host Path
-                      description: The host path to use for storage.
-                      schema:
-                        type: hostpath
-                        show_if: [["aclEnable", "=", false]]
-                        required: true
-        - variable: profile
-          label: Supabase Profile Storage
-          description: The path to store Supabase Profile.
-          schema:
-            type: dict
-            attrs:
-              - variable: type
-                label: Type
-                description: |
-                  ixVolume: Is dataset created automatically by the system.</br>
-                  Host Path: Is a path that already exists on the system.
-                schema:
-                  type: string
-                  required: true
-                  immutable: true
-                  default: ixVolume
-                  enum:
-                    - value: hostPath
-                      description: Host Path (Path that already exists on the system)
-                    - value: ixVolume
-                      description: ixVolume (Dataset created automatically by the system)
-              - variable: ixVolumeConfig
-                label: ixVolume Configuration
-                description: The configuration for the ixVolume dataset.
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "ixVolume"]]
-                  $ref:
-                    - "normalize/ixVolume"
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: datasetName
-                      label: Dataset Name
-                      description: The name of the dataset to use for storage.
-                      schema:
-                        type: string
-                        required: true
-                        immutable: true
-                        hidden: true
-                        default: "profile"
-                    - variable: aclEntries
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-              - variable: hostPathConfig
-                label: Host Path Configuration
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "hostPath"]]
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: acl
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-                        $ref:
-                          - "normalize/acl"
-                    - variable: hostPath
-                      label: Host Path
-                      description: The host path to use for storage.
-                      schema:
-                        type: hostpath
-                        show_if: [["aclEnable", "=", false]]
-                        required: true
-        - variable: video
-          label: Supabase Video Storage
-          description: The path to store Supabase Video.
-          schema:
-            type: dict
-            attrs:
-              - variable: type
-                label: Type
-                description: |
-                  ixVolume: Is dataset created automatically by the system.</br>
-                  Host Path: Is a path that already exists on the system.
-                schema:
-                  type: string
-                  required: true
-                  immutable: true
-                  default: ixVolume
-                  enum:
-                    - value: hostPath
-                      description: Host Path (Path that already exists on the system)
-                    - value: ixVolume
-                      description: ixVolume (Dataset created automatically by the system)
-              - variable: ixVolumeConfig
-                label: ixVolume Configuration
-                description: The configuration for the ixVolume dataset.
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "ixVolume"]]
-                  $ref:
-                    - "normalize/ixVolume"
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: datasetName
-                      label: Dataset Name
-                      description: The name of the dataset to use for storage.
-                      schema:
-                        type: string
-                        required: true
-                        immutable: true
-                        hidden: true
-                        default: "video"
-                    - variable: aclEntries
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-              - variable: hostPathConfig
-                label: Host Path Configuration
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "hostPath"]]
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: acl
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-                        $ref:
-                          - "normalize/acl"
-                    - variable: hostPath
-                      label: Host Path
-                      description: The host path to use for storage.
-                      schema:
-                        type: hostpath
-                        show_if: [["aclEnable", "=", false]]
-                        required: true
-
-        - variable: pgData
-          label: Supabase Postgres Data Storage
-          description: The path to store Supabase Postgres Data.
-          schema:
-            type: dict
-            attrs:
-              - variable: type
-                label: Type
-                description: |
-                  ixVolume: Is dataset created automatically by the system.</br>
-                  Host Path: Is a path that already exists on the system.
-                schema:
-                  type: string
-                  required: true
-                  immutable: true
-                  default: ixVolume
-                  enum:
-                    - value: hostPath
-                      description: Host Path (Path that already exists on the system)
-                    - value: ixVolume
-                      description: ixVolume (Dataset created automatically by the system)
-              - variable: ixVolumeConfig
-                label: ixVolume Configuration
-                description: The configuration for the ixVolume dataset.
-                schema:
-                  type: dict
-                  # Nothing to show for the user
-                  hidden: true
-                  show_if: [["type", "=", "ixVolume"]]
-                  $ref:
-                    - "normalize/ixVolume"
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        # Postgres does a CHMOD at startup
-                        # Which fails with ACL
-                        hidden: true
-                        default: false
-                    - variable: datasetName
-                      label: Dataset Name
-                      description: The name of the dataset to use for storage.
-                      schema:
-                        type: string
-                        required: true
-                        immutable: true
-                        hidden: true
-                        default: "pgData"
-                    - variable: aclEntries
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-              - variable: hostPathConfig
-                label: Host Path Configuration
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "hostPath"]]
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        # Postgres does a CHMOD at startup
-                        # Which fails with ACL
-                        hidden: true
-                        default: false
-                    - variable: acl
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-                        $ref:
-                          - "normalize/acl"
-                    - variable: hostPath
-                      label: Host Path
-                      description: The host path to use for storage.
-                      schema:
-                        type: hostpath
-                        show_if: [["aclEnable", "=", false]]
-                        required: true
-
-        - variable: pgBackup
-          label: Supabase Postgres Backup Storage
-          description: The path to store Supabase Postgres Backup.
-          schema:
-            type: dict
-            attrs:
-              - variable: type
-                label: Type
-                description: |
-                  ixVolume: Is dataset created automatically by the system.</br>
-                  Host Path: Is a path that already exists on the system.
-                schema:
-                  type: string
-                  required: true
-                  immutable: true
-                  default: ixVolume
-                  enum:
-                    - value: hostPath
-                      description: Host Path (Path that already exists on the system)
-                    - value: ixVolume
-                      description: ixVolume (Dataset created automatically by the system)
-              - variable: ixVolumeConfig
-                label: ixVolume Configuration
-                description: The configuration for the ixVolume dataset.
-                schema:
-                  type: dict
-                  # Nothing to show for the user
-                  hidden: true
-                  show_if: [["type", "=", "ixVolume"]]
-                  $ref:
-                    - "normalize/ixVolume"
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        # Postgres does a CHMOD at startup
-                        # Which fails with ACL
-                        hidden: true
-                        default: false
-                    - variable: datasetName
-                      label: Dataset Name
-                      description: The name of the dataset to use for storage.
-                      schema:
-                        type: string
-                        required: true
-                        immutable: true
-                        hidden: true
-                        default: "pgBackup"
-                    - variable: aclEntries
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-              - variable: hostPathConfig
-                label: Host Path Configuration
-                schema:
-                  type: dict
-                  show_if: [["type", "=", "hostPath"]]
-                  attrs:
-                    - variable: aclEnable
-                      label: Enable ACL
-                      description: Enable ACL for the dataset.
-                      schema:
-                        type: boolean
-                        # Postgres does a CHMOD at startup
-                        # Which fails with ACL
-                        hidden: true
-                        default: false
-                    - variable: acl
-                      label: ACL Configuration
-                      schema:
-                        type: dict
-                        show_if: [["aclEnable", "=", true]]
-                        attrs: []
-                        $ref:
-                          - "normalize/acl"
-                    - variable: hostPath
-                      label: Host Path
-                      description: The host path to use for storage.
-                      schema:
-                        type: hostpath
-                        show_if: [["aclEnable", "=", false]]
-                        required: true
-
-        - variable: additionalStorages
-          label: Additional Storage
-          description: Additional storage for Supabase.
+                  default: "latest"
+        - variable: imagePullSecrets
+          label: "Image Pull Secrets"
           schema:
             type: list
             default: []
-            items:
-              - variable: storageEntry
-                label: Storage Entry
-                schema:
-                  type: dict
-                  attrs:
-                    - variable: type
-                      label: Type
-                      description: |
-                        ixVolume: Is dataset created automatically by the system.</br>
-                        Host Path: Is a path that already exists on the system.</br>
-                        SMB Share: Is a SMB share that is mounted to a persistent volume claim.
-                      schema:
-                        type: string
-                        required: true
-                        default: "ixVolume"
-                        immutable: true
-                        enum:
-                          - value: "hostPath"
-                            description: Host Path (Path that already exists on the system)
-                          - value: "ixVolume"
-                            description: ixVolume (Dataset created automatically by the system)
-                          - value: "smb-pv-pvc"
-                            description: SMB Share (Mounts a persistent volume claim to a SMB share)
-                    - variable: readOnly
-                      label: Read Only
-                      description: Mount the volume as read only.
-                      schema:
-                        type: boolean
-                        default: false
-                    - variable: mountPath
-                      label: Mount Path
-                      description: The path inside the container to mount the storage.
-                      schema:
-                        type: path
-                        required: true
-                    - variable: hostPathConfig
-                      label: Host Path Configuration
-                      schema:
-                        type: dict
-                        show_if: [["type", "=", "hostPath"]]
-                        attrs:
-                          - variable: aclEnable
-                            label: Enable ACL
-                            description: Enable ACL for the dataset.
-                            schema:
-                              type: boolean
-                              default: false
-                          - variable: acl
-                            label: ACL Configuration
-                            schema:
-                              type: dict
-                              show_if: [["aclEnable", "=", true]]
-                              attrs: []
-                              $ref:
-                                - "normalize/acl"
-                          - variable: hostPath
-                            label: Host Path
-                            description: The host path to use for storage.
-                            schema:
-                              type: hostpath
-                              show_if: [["aclEnable", "=", false]]
-                              required: true
-                    - variable: ixVolumeConfig
-                      label: ixVolume Configuration
-                      description: The configuration for the ixVolume dataset.
-                      schema:
-                        type: dict
-                        show_if: [["type", "=", "ixVolume"]]
-                        $ref:
-                          - "normalize/ixVolume"
-                        attrs:
-                          - variable: aclEnable
-                            label: Enable ACL
-                            description: Enable ACL for the dataset.
-                            schema:
-                              type: boolean
-                              default: false
-                          - variable: datasetName
-                            label: Dataset Name
-                            description: The name of the dataset to use for storage.
-                            schema:
-                              type: string
-                              required: true
-                              immutable: true
-                              default: "storage_entry"
-                          - variable: aclEntries
-                            label: ACL Configuration
-                            schema:
-                              type: dict
-                              show_if: [["aclEnable", "=", true]]
-                              attrs: []
-                    - variable: smbConfig
-                      label: SMB Share Configuration
-                      description: The configuration for the SMB Share.
-                      schema:
-                        type: dict
-                        show_if: [["type", "=", "smb-pv-pvc"]]
-                        attrs:
-                          - variable: server
-                            label: Server
-                            description: The server for the SMB share.
-                            schema:
-                              type: string
-                              required: true
-                          - variable: share
-                            label: Share
-                            description: The share name for the SMB share.
-                            schema:
-                              type: string
-                              required: true
-                          - variable: domain
-                            label: Domain (Optional)
-                            description: The domain for the SMB share.
-                            schema:
-                              type: string
-                          - variable: username
-                            label: Username
-                            description: The username for the SMB share.
-                            schema:
-                              type: string
-                              required: true
-                          - variable: password
-                            label: Password
-                            description: The password for the SMB share.
-                            schema:
-                              type: string
-                              required: true
-                              private: true
-                          - variable: size
-                            label: Size (in Gi)
-                            description: The size of the volume quota.
-                            schema:
-                              type: int
-                              required: true
-                              min: 1
-                              default: 1
-
-  - variable: resources
-    label: ""
-    group: Resources Configuration
-    schema:
-      type: dict
-      attrs:
-        - variable: limits
-          label: Limits
+        - variable: replicaCount
+          label: "Replica Count"
+          schema:
+            type: int
+            default: 1
+        - variable: nameOverride
+          label: "Name Override"
+          schema:
+            type: string
+            default: ""
+        - variable: fullnameOverride
+          label: "Fullname Override"
+          schema:
+            type: string
+            default: ""
+        - variable: livenessProbe
+          label: "Liveness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: readinessProbe
+          label: "Readiness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: serviceAccount
+          label: "Service Account"
           schema:
             type: dict
             attrs:
-              - variable: cpu
-                label: CPU
-                description: CPU limit for Supabase.
+              - variable: create
+                label: "Create Service Account"
+                description: "Specifies whether a service account should be created"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: annotations
+                label: "Service Account Annotations"
+                description: "Annotations to add to the service account"
+                schema:
+                  type: dict
+                  default: {}
+              - variable: name
+                label: "Service Account Name"
+                description: "The name of the service account to use.\n            If not set and create is true, a name is generated using the fullname template"
                 schema:
                   type: string
-                  max_length: 6
-                  valid_chars: '^(0\.[1-9]|[1-9][0-9]*)(\.[0-9]|m?)$'
-                  valid_chars_error: |
-                    Valid CPU limit formats are</br>
-                    - Plain Integer - eg. 1</br>
-                    - Float - eg. 0.5</br>
-                    - Milicpu - eg. 500m
-                  default: "4000m"
-                  required: true
-              - variable: memory
-                label: Memory
-                description: Memory limit for Supabase.
+                  default: ""
+        - variable: podAnnotations
+          label: "Pod Annotations"
+          schema:
+            type: dict
+            default: {}
+        - variable: podSecurityContext
+          label: "Pod Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: securityContext
+          label: "Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: service
+          label: "Service Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: type
+                label: "Service Type"
                 schema:
                   type: string
-                  max_length: 12
-                  valid_chars: '^[1-9][0-9]*([EPTGMK]i?|e[0-9]+)?$'
-                  valid_chars_error: |
-                    Valid Memory limit formats are</br>
-                    - Suffixed with E/P/T/G/M/K - eg. 1G</br>
-                    - Suffixed with Ei/Pi/Ti/Gi/Mi/Ki - eg. 1Gi</br>
-                    - Plain Integer in bytes - eg. 1024</br>
-                    - Exponent - eg. 134e6
-                  default: "8Gi"
-                  required: true
-
-  - variable: supabaseGPU
-    group: Resources Configuration
-    label: GPU Configuration
+                  default: ClusterIP
+              - variable: port
+                label: "Port"
+                schema:
+                  type: int
+                  default: 5432
+        - variable: environment
+          label: "Environment Variables"
+          schema:
+            type: dict
+            attrs:
+              - variable: POSTGRES_HOST
+                label: "Postgres Host"
+                schema:
+                  type: string
+                  default: /var/run/postgresql
+              - variable: PGPORT
+                label: "Postgres Port"
+                schema:
+                  type: string
+                  default: "5432"
+              - variable: POSTGRES_PORT
+                label: "Postgres Port"
+                schema:
+                  type: string
+                  default: "5432"
+              - variable: JWT_EXP
+                label: "JWT Expiration"
+                schema:
+                  type: int
+                  default: 3600
+        - variable: resources
+          label: "Resource Limits"
+          description: "Configure resource limits for the container\n            We usually recommend not to specify default resources and to leave this as a conscious\n            choice for the user. This also increases chances charts run on environments with little\n            resources, such as Minikube. If you do want to specify resources, uncomment the following\n            lines, adjust them as necessary, and remove the curly braces after 'resources:'."
+          schema:
+            type: dict
+            default: {}
+        - variable: persistence
+          label: "Persistence Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: enabled
+                label: "Enable Persistence"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: storageClassName
+                label: "Storage Class Name"
+                schema:
+                  type: string
+                  default: ""
+              - variable: annotations
+                label: "Annotations"
+                schema:
+                  type: dict
+                  default: {}
+              - variable: size
+                label: "Size"
+                schema:
+                  type: string
+                  default: 8Gi
+              - variable: accessModes
+                label: "Access Modes"
+                schema:
+                  type: list
+                  default:
+                    - ReadWriteOnce
+              - variable: class
+                label: "Class"
+                schema:
+                  type: string
+                  default: ""
+        - variable: autoscaling
+          label: "Autoscaling Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: enabled
+                label: "Enable Autoscaling"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: minReplicas
+                label: "Minimum Replicas"
+                schema:
+                  type: int
+                  default: 1
+              - variable: maxReplicas
+                label: "Maximum Replicas"
+                schema:
+                  type: int
+                  default: 100
+              - variable: targetCPUUtilizationPercentage
+                label: "Target CPU Utilization Percentage"
+                schema:
+                  type: int
+                  default: 80
+        - variable: nodeSelector
+          label: "Node Selector"
+          schema:
+            type: dict
+            default: {}
+        - variable: tolerations
+          label: "Tolerations"
+          schema:
+            type: list
+            default: []
+        - variable: affinity
+          label: "Affinity"
+          schema:
+            type: dict
+            default: {}
+        - variable: config
+          label: "Additional Migration Scripts"
+          description: "Additional migration scripts can be defined here"
+          schema:
+            type: dict
+            default: {}
+  - variable: studio
+    label: "Studio Application"
+    description: "Configure Studio Application"
     schema:
       type: dict
-      $ref:
-        - "definitions/gpuConfiguration"
-      attrs: []
+      attrs:
+        - variable: enabled
+          label: "Enable Studio Provisioning"
+          description: "Enable studio provisioning"
+          schema:
+            type: boolean
+            default: true
+        - variable: image
+          label: "Image Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: repository
+                label: "Image Repository"
+                schema:
+                  type: string
+                  default: supabase/studio
+              - variable: pullPolicy
+                label: "Image Pull Policy"
+                schema:
+                  type: string
+                  default: IfNotPresent
+              - variable: tag
+                label: "Image Tag"
+                schema:
+                  type: string
+                  default: "latest"
+        - variable: imagePullSecrets
+          label: "Image Pull Secrets"
+          schema:
+            type: list
+            default: []
+        - variable: replicaCount
+          label: "Replica Count"
+          schema:
+            type: int
+            default: 1
+        - variable: nameOverride
+          label: "Name Override"
+          schema:
+            type: string
+            default: ""
+        - variable: fullnameOverride
+          label: "Fullname Override"
+          schema:
+            type: string
+            default: ""
+        - variable: livenessProbe
+          label: "Liveness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: readinessProbe
+          label: "Readiness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: serviceAccount
+          label: "Service Account"
+          schema:
+            type: dict
+            attrs:
+              - variable: create
+                label: "Create Service Account"
+                description: "Specifies whether a service account should be created"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: annotations
+                label: "Service Account Annotations"
+                description: "Annotations to add to the service account"
+                schema:
+                  type: dict
+                  default: {}
+              - variable: name
+                label: "Service Account Name"
+                description: "The name of the service account to use.\n            If not set and create is true, a name is generated using the fullname template"
+                schema:
+                  type: string
+                  default: ""
+        - variable: podAnnotations
+          label: "Pod Annotations"
+          schema:
+            type: dict
+            default: {}
+        - variable: podSecurityContext
+          label: "Pod Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: securityContext
+          label: "Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: service
+          label: "Service Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: type
+                label: "Service Type"
+                schema:
+                  type: string
+                  default: ClusterIP
+              - variable: port
+                label: "Port"
+                schema:
+                  type: int
+                  default: 3000
+        - variable: environment
+          label: "Environment Variables"
+          schema:
+            type: dict
+            attrs:
+              - variable: STUDIO_DEFAULT_ORGANIZATION
+                label: "Studio Default Organization"
+                schema:
+                  type: string
+                  default: Default Organization
+              - variable: STUDIO_DEFAULT_PROJECT
+                label: "Studio Default Project"
+                schema:
+                  type: string
+                  default: Default Project
+              - variable: STUDIO_PORT
+                label: "Studio Port"
+                schema:
+                  type: string
+                  default: "3000"
+              - variable: SUPABASE_PUBLIC_URL
+                label: "Supabase Public URL"
+                schema:
+                  type: string
+                  default: http://example.com
+              - variable: NEXT_PUBLIC_ENABLE_LOGS
+                label: "Enable Logs"
+                schema:
+                  type: string
+                  default: "true"
+              - variable: NEXT_ANALYTICS_BACKEND_PROVIDER
+                label: "Analytics Backend Provider"
+                description: "Set value to bigquery to use Big Query backend for analytics"
+                schema:
+                  type: string
+                  default: postgres
+        - variable: resources
+          label: "Resource Limits"
+          description: "Configure resource limits for the container\n            We usually recommend not to specify default resources and to leave this as a conscious\n            choice for the user. This also increases chances charts run on environments with little\n            resources, such as Minikube. If you do want to specify resources, uncomment the following\n            lines, adjust them as necessary, and remove the curly braces after 'resources:'."
+          schema:
+            type: dict
+            default: {}
+        - variable: autoscaling
+          label: "Autoscaling Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: enabled
+                label: "Enable Autoscaling"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: minReplicas
+                label: "Minimum Replicas"
+                schema:
+                  type: int
+                  default: 1
+              - variable: maxReplicas
+                label: "Maximum Replicas"
+                schema:
+                  type: int
+                  default: 100
+              - variable: targetCPUUtilizationPercentage
+                label: "Target CPU Utilization Percentage"
+                schema:
+                  type: int
+                  default: 80
+        - variable: nodeSelector
+          label: "Node Selector"
+          schema:
+            type: dict
+            default: {}
+        - variable: tolerations
+          label: "Tolerations"
+          schema:
+            type: list
+            default: []
+        - variable: affinity
+          label: "Affinity"
+          schema:
+            type: dict
+            default: {}
+  - variable: auth
+    label: "Auth Service"
+    description: "Configure Auth Service"
+    schema:
+      type: dict
+      attrs:
+        - variable: enabled
+          label: "Enable Auth Provisioning"
+          description: "Enable auth provisioning"
+          schema:
+            type: boolean
+            default: true
+        - variable: image
+          label: "Image Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: repository
+                label: "Image Repository"
+                schema:
+                  type: string
+                  default: supabase/gotrue
+              - variable: pullPolicy
+                label: "Image Pull Policy"
+                schema:
+                  type: string
+                  default: IfNotPresent
+              - variable: tag
+                label: "Image Tag"
+                schema:
+                  type: string
+                  default: "latest"
+        - variable: imagePullSecrets
+          label: "Image Pull Secrets"
+          schema:
+            type: list
+            default: []
+        - variable: replicaCount
+          label: "Replica Count"
+          schema:
+            type: int
+            default: 1
+        - variable: nameOverride
+          label: "Name Override"
+          schema:
+            type: string
+            default: ""
+        - variable: fullnameOverride
+          label: "Fullname Override"
+          schema:
+            type: string
+            default: ""
+        - variable: livenessProbe
+          label: "Liveness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: readinessProbe
+          label: "Readiness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: serviceAccount
+          label: "Service Account"
+          schema:
+            type: dict
+            attrs:
+              - variable: create
+                label: "Create Service Account"
+                description: "Specifies whether a service account should be created"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: annotations
+                label: "Service Account Annotations"
+                description: "Annotations to add to the service account"
+                schema:
+                  type: dict
+                  default: {}
+              - variable: name
+                label: "Service Account Name"
+                description: "The name of the service account to use.\n            If not set and create is true, a name is generated using the fullname template"
+                schema:
+                  type: string
+                  default: ""
+        - variable: podAnnotations
+          label: "Pod Annotations"
+          schema:
+            type: dict
+            default: {}
+        - variable: podSecurityContext
+          label: "Pod Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: securityContext
+          label: "Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: service
+          label: "Service Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: type
+                label: "Service Type"
+                schema:
+                  type: string
+                  default: ClusterIP
+              - variable: port
+                label: "Port"
+                schema:
+                  type: int
+                  default: 9999
+        - variable: environment
+          label: "Environment Variables"
+          schema:
+            type: dict
+            attrs:
+              - variable: DB_USER
+                label: "Database User"
+                schema:
+                  type: string
+                  default: supabase_auth_admin
+              - variable: DB_PORT
+                label: "Database Port"
+                schema:
+                  type: int
+                  default: 5432
+              - variable: DB_DRIVER
+                label: "Database Driver"
+                schema:
+                  type: string
+                  default: postgres
+              - variable: DB_SSL
+                label: "Database SSL"
+                schema:
+                  type: string
+                  default: disable
+                  enum:
+                    - value: "disable"
+                      description: "Disable SSL"
+                    - value: "allow"
+                      description: "Allow SSL"
+                    - value: "prefer"
+                      description: "Prefer SSL"
+                    - value: "require"
+                      description: "Require SSL"
+                    - value: "verify-ca"
+                      description: "Verify CA"
+                    - value: "verify-full"
+                      description: "Verify Full"
+              - variable: API_EXTERNAL_URL
+                label: "API External URL"
+                schema:
+                  type: string
+                  default: http://example.com
+              - variable: GOTRUE_API_HOST
+                label: "GoTrue API Host"
+                schema:
+                  type: string
+                  default: "0.0.0.0"
+              - variable: GOTRUE_API_PORT
+                label: "GoTrue API Port"
+                schema:
+                  type: string
+                  default: "9999"
+              - variable: GOTRUE_SITE_URL
+                label: "GoTrue Site URL"
+                schema:
+                  type: string
+                  default: http://example.com
+              - variable: GOTRUE_URI_ALLOW_LIST
+                label: "GoTrue URI Allow List"
+                schema:
+                  type: string
+                  default: "*"
+              - variable: GOTRUE_DISABLE_SIGNUP
+                label: "GoTrue Disable Signup"
+                schema:
+                  type: string
+                  default: "false"
+              - variable: GOTRUE_JWT_DEFAULT_GROUP_NAME
+                label: "GoTrue JWT Default Group Name"
+                schema:
+                  type: string
+                  default: authenticated
+              - variable: GOTRUE_JWT_ADMIN_ROLES
+                label: "GoTrue JWT Admin Roles"
+                schema:
+                  type: string
+                  default: service_role
+              - variable: GOTRUE_JWT_AUD
+                label: "GoTrue JWT Aud"
+                schema:
+                  type: string
+                  default: authenticated
+              - variable: GOTRUE_JWT_EXP
+                label: "GoTrue JWT Expiration"
+                schema:
+                  type: string
+                  default: "3600"
+              - variable: GOTRUE_EXTERNAL_EMAIL_ENABLED
+                label: "GoTrue External Email Enabled"
+                schema:
+                  type: string
+                  default: "true"
+              - variable: GOTRUE_MAILER_AUTOCONFIRM
+                label: "GoTrue Mailer Autoconfirm"
+                schema:
+                  type: string
+                  default: "true"
+              - variable: GOTRUE_SMTP_ADMIN_EMAIL
+                label: "GoTrue SMTP Admin Email"
+                schema:
+                  type: string
+                  default: "SMTP_ADMIN_MAIL"
+              - variable: GOTRUE_SMTP_HOST
+                label: "GoTrue SMTP Host"
+                schema:
+                  type: string
+                  default: "SMTP_HOST"
+              - variable: GOTRUE_SMTP_PORT
+                label: "GoTrue SMTP Port"
+                schema:
+                  type: string
+                  default: "SMTP_PORT"
+              - variable: GOTRUE_SMTP_SENDER_NAME
+                label: "GoTrue SMTP Sender Name"
+                schema:
+                  type: string
+                  default: "SMTP_SENDER_NAME"
+              - variable: GOTRUE_EXTERNAL_PHONE_ENABLED
+                label: "GoTrue External Phone Enabled"
+                schema:
+                  type: string
+                  default: "false"
+              - variable: GOTRUE_SMS_AUTOCONFIRM
+                label: "GoTrue SMS Autoconfirm"
+                schema:
+                  type: string
+                  default: "false"
+              - variable: GOTRUE_MAILER_URLPATHS_INVITE
+                label: "GoTrue Mailer URL Paths Invite"
+                schema:
+                  type: string
+                  default: /auth/v1/verify
+              - variable: GOTRUE_MAILER_URLPATHS_CONFIRMATION
+                label: "GoTrue Mailer URL Paths Confirmation"
+                schema:
+                  type: string
+                  default: /auth/v1/verify
+              - variable: GOTRUE_MAILER_URLPATHS_RECOVERY
+                label: "GoTrue Mailer URL Paths Recovery"
+                schema:
+                  type: string
+                  default: /auth/v1/verify
+              - variable: GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE
+                label: "GoTrue Mailer URL Paths Email Change"
+                schema:
+                  type: string
+                  default: /auth/v1/verify
+        - variable: resources
+          label: "Resource Limits"
+          description: "Configure resource limits for the container\n            We usually recommend not to specify default resources and to leave this as a conscious\n            choice for the user. This also increases chances charts run on environments with little\n            resources, such as Minikube. If you do want to specify resources, uncomment the following\n            lines, adjust them as necessary, and remove the curly braces after 'resources:'."
+          schema:
+            type: dict
+            default: {}
+        - variable: autoscaling
+          label: "Autoscaling Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: enabled
+                label: "Enable Autoscaling"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: minReplicas
+                label: "Minimum Replicas"
+                schema:
+                  type: int
+                  default: 1
+              - variable: maxReplicas
+                label: "Maximum Replicas"
+                schema:
+                  type: int
+                  default: 100
+              - variable: targetCPUUtilizationPercentage
+                label: "Target CPU Utilization Percentage"
+                schema:
+                  type: int
+                  default: 80
+        - variable: nodeSelector
+          label: "Node Selector"
+          schema:
+            type: dict
+            default: {}
+        - variable: tolerations
+          label: "Tolerations"
+          schema:
+            type: list
+            default: []
+        - variable: affinity
+          label: "Affinity"
+          schema:
+            type: dict
+            default: {}
+  - variable: realtime
+    label: "Realtime Service"
+    description: "Configure Realtime Service"
+    schema:
+      type: dict
+      attrs:
+        - variable: enabled
+          label: "Enable Realtime Provisioning"
+          description: "Enable realtime provisioning"
+          schema:
+            type: boolean
+            default: true
+        - variable: image
+          label: "Image Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: repository
+                label: "Image Repository"
+                schema:
+                  type: string
+                  default: supabase/realtime
+              - variable: pullPolicy
+                label: "Image Pull Policy"
+                schema:
+                  type: string
+                  default: IfNotPresent
+              - variable: tag
+                label: "Image Tag"
+                schema:
+                  type: string
+                  default: "latest"
+        - variable: imagePullSecrets
+          label: "Image Pull Secrets"
+          schema:
+            type: list
+            default: []
+        - variable: nameOverride
+          label: "Name Override"
+          schema:
+            type: string
+            default: ""
+        - variable: fullnameOverride
+          label: "Fullname Override"
+          schema:
+            type: string
+            default: ""
+        - variable: livenessProbe
+          label: "Liveness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: readinessProbe
+          label: "Readiness Probe"
+          schema:
+            type: dict
+            default: {}
+        - variable: serviceAccount
+          label: "Service Account"
+          schema:
+            type: dict
+            attrs:
+              - variable: create
+                label: "Create Service Account"
+                description: "Specifies whether a service account should be created"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: annotations
+                label: "Service Account Annotations"
+                description: "Annotations to add to the service account"
+                schema:
+                  type: dict
+                  default: {}
+              - variable: name
+                label: "Service Account Name"
+                description: "The name of the service account to use.\n            If not set and create is true, a name is generated using the fullname template"
+                schema:
+                  type: string
+                  default: ""
+        - variable: podAnnotations
+          label: "Pod Annotations"
+          schema:
+            type: dict
+            default: {}
+        - variable: podSecurityContext
+          label: "Pod Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: securityContext
+          label: "Security Context"
+          schema:
+            type: dict
+            default: {}
+        - variable: service
+          label: "Service Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: type
+                label: "Service Type"
+                schema:
+                  type: string
+                  default: ClusterIP
+              - variable: port
+                label: "Port"
+                schema:
+                  type: int
+                  default: 4000
+        - variable: environment
+          label: "Environment Variables"
+          schema:
+            type: dict
+            attrs:
+              - variable: DB_USER
+                label: "Database User"
+                schema:
+                  type: string
+                  default: supabase_admin
+              - variable: DB_PORT
+                label: "Database Port"
+                schema:
+                  type: int
+                  default: 5432
+              - variable: DB_SSL
+                label: "Database SSL"
+                schema:
+                  type: string
+                  default: disable
+                  enum:
+                    - value: "disable"
+                      description: "Disable SSL"
+                    - value: "allow"
+                      description: "Allow SSL"
+                    - value: "prefer"
+                      description: "Prefer SSL"
+                    - value: "require"
+                      description: "Require SSL"
+                    - value: "verify-ca"
+                      description: "Verify CA"
+                    - value: "verify-full"
+                      description: "Verify Full"
+              - variable: DB_AFTER_CONNECT_QUERY
+                label: "Database After Connect Query"
+                schema:
+                  type: string
+                  default: SET search_path TO _realtime
+              - variable: DB_ENC_KEY
+                label: "Database Encryption Key"
+                schema:
+                  type: string
+                  default: supabaserealtime
+              - variable: PORT
+                label: "Port"
+                schema:
+                  type: string
+                  default: "4000"
+              - variable: FLY_ALLOC_ID
+                label: "Fly Allocation ID"
+                schema:
+                  type: string
+                  default: fly123
+              - variable: FLY_APP_NAME
+                label: "Fly App Name"
+                schema:
+                  type: string
+                  default: realtime
+              - variable: SECRET_KEY_BASE
+                label: "Secret Key Base"
+                schema:
+                  type: string
+                  default: UpNVntn3cDxHJpq99YMc1T1AQgQpc8kfYTuRgBiYa15BLrx8etQoXz3gZv1/u2oq
+              - variable: ERL_AFLAGS
+                label: "Erlang Flags"
+                schema:
+                  type: string
+                  default: -proto_dist inet_tcp
+              - variable: ENABLE_TAILSCALE
+                label: "Enable Tailscale"
+                schema:
+                  type: string
+                  default: "false"
+              - variable: DNS_NODES
+                label: "DNS Nodes"
+                schema:
+                  type: string
+                  default: "''"
+        - variable: resources
+          label: "Resource Limits"
+          description: "Configure resource limits for the container\n            We usually recommend not to specify default resources and to leave this as a conscious\n            choice for the user. This also increases chances charts run on environments with little\n            resources, such as Minikube. If you do want to specify resources, uncomment the following\n            lines, adjust them as necessary, and remove the curly braces after 'resources:'."
+          schema:
+            type: dict
+            default: {}
+        - variable: autoscaling
+          label: "Autoscaling Configuration"
+          schema:
+            type: dict
+            attrs:
+              - variable: enabled
+                label: "Enable Autoscaling"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: minReplicas
+                label: "Minimum Replicas"
+                schema:
+                  type: int
+                  default: 1
+              - variable: maxReplicas
+                label: "Maximum Replicas"
+                schema:
+                  type: int
+                  default: 100
+              - variable: targetCPUUtilizationPercentage
+                label: "Target CPU Utilization Percentage"
+                schema:
+                  type: int
+                  default: 80
+        - variable: nodeSelector
+          label: "Node Selector"
+          schema:
+            type: dict
+            default: {}
+        - variable: tolerations
+          label: "Tolerations"
+          schema:
+            type: list
+            default: []
+        - variable: affinity
+          label: "Affinity"
+          schema:
+            type: dict
+            default: {}
+  
